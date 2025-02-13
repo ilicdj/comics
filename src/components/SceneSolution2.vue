@@ -45,41 +45,13 @@ export default defineComponent({
         this.targetScroll = 0
         this.ease = 0.05 // Smoothing factor
 
-        // Add scroll activity tracking
-        this.isScrolling = false
-        this.scrollTimeout = null
-
         this.scroller = new VirtualScroll()
         this.scroller.on((event) => {
-          // Calculate the target scroll position
           let newTarget = this.targetScroll + event.deltaY * 0.001
-
-          // Prevent scrolling left at the start position
-          if (newTarget > 0) {
-            newTarget = 0
-          }
-
+          // Set reasonable bounds for the scroll value
+          const maxScroll = 7
+          newTarget = Math.max(Math.min(newTarget, maxScroll), -maxScroll)
           this.targetScroll = newTarget
-
-          // Set scrolling state to true
-          this.isScrolling = true
-          
-          // Clear the previous timeout
-          if (this.scrollTimeout) {
-            clearTimeout(this.scrollTimeout)
-          }
-          
-          // Set a timeout to detect when scrolling stops
-          this.scrollTimeout = setTimeout(() => {
-            this.isScrolling = false
-            // Reset hover effect on all meshes when scrolling stops
-            this.meshes.forEach(m => {
-              gsap.to(m.mesh.material.uniforms.uHover, {
-                value: 0,
-                duration: 0.5
-              })
-            })
-          }, 150)
         })
 
         container.appendChild(this.renderer.domElement)
@@ -88,8 +60,10 @@ export default defineComponent({
         this.camera.position.set(0, 0, 1.5)
 
         this.time = 0
-
         this.images = [dylandog, batman, spiderman, onepiece, asterix]
+
+        this.meshSpacing = 1.8 // Distance between meshes
+        this.totalWidth = this.images.length * this.meshSpacing // Total width of all meshes
 
         this.addObjects()
         this.resize()
@@ -106,7 +80,6 @@ export default defineComponent({
         }
         this.gui = new GUI()
         this.gui.add(this.settings, 'progress', 0, 1, 0.01)
-        this.gui.hide()
       }
 
       getMaterial(image) {
@@ -123,8 +96,7 @@ export default defineComponent({
               vec3 newPos = position;
               
               // Animated sin wave that reacts to hover
-              newPos.z = -0.1 * cos(newPos.y * 2.0 + uTime * 0.1) * uHover;
-              
+              newPos.z = 0.09 * sin(newPos.x * 2.0 + uTime) * 0.;
               
               gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(newPos, 1.0);
             }
@@ -157,14 +129,38 @@ export default defineComponent({
         this.images.forEach((image, index) => {
           let material = this.getMaterial(image)
           let mesh = new THREE.Mesh(this.geometry, material)
-          mesh.position.x = (index - 2) * 1.8
+
+          // Initial positioning
+          const initialX = (index - Math.floor(this.images.length / 2)) * this.meshSpacing
+          mesh.position.x = initialX
+
+          mesh.onMouseEnter = () => gsap.to(material.uniforms.uHover, { value: 0, duration: 0 })
+          mesh.onMouseLeave = () => gsap.to(material.uniforms.uHover, { value: 1, duration: 0 })
 
           this.scene.add(mesh)
           this.meshes.push({
             mesh: mesh,
             progress: 0,
-            pos: 2 * index,
+            pos: initialX, // Store initial position
+            initialX: initialX, // Keep track of initial position
           })
+        })
+
+        // Rest of the mouse event handling remains the same
+        window.addEventListener('mousemove', (event) => {
+          const raycaster = new THREE.Raycaster()
+          const mouse = new THREE.Vector2(
+            (event.clientX / window.innerWidth) * 2 - 1,
+            -(event.clientY / window.innerHeight) * 2 + 1,
+          )
+
+          raycaster.setFromCamera(mouse, this.camera)
+          const intersects = raycaster.intersectObjects(this.meshes.map((m) => m.mesh))
+
+          this.meshes.forEach((m) => m.mesh.onMouseLeave())
+          if (intersects.length > 0) {
+            intersects[0].object.onMouseEnter()
+          }
         })
       }
 
@@ -186,29 +182,23 @@ export default defineComponent({
         // Smooth scroll interpolation
         this.scrollProgress += (this.targetScroll - this.scrollProgress) * this.ease
 
+        const leftBoundary = -5
+        const rightBoundary = 5
+
         this.meshes.forEach((mesh) => {
           if (mesh.mesh.material.uniforms.uTime) {
             mesh.mesh.material.uniforms.uTime.value = this.time
-            mesh.mesh.position.x = mesh.pos + this.scrollProgress
 
-            // Apply hover effect based on scroll state
-            if (this.isScrolling) {
-              gsap.to(mesh.mesh.material.uniforms.uHover, {
-                value: 1,
-                duration: 0.3
-              })
-            }
+            // Calculate new position based on scroll
+            const newX = mesh.initialX + this.scrollProgress * this.meshSpacing
 
-            // Reset position when mesh goes off-screen to the left
-            if (mesh.mesh.position.x < -5) {
-              mesh.mesh.position.x += this.meshes.length * 1.8 + 1
-              mesh.pos += this.meshes.length * 1.8 + 1
-            }
-
-            // Reset position when mesh goes off-screen to the right (for reverse scroll)
-            if (mesh.mesh.position.x > 5) {
-              mesh.mesh.position.x -= this.meshes.length * 1.8 + 1
-              mesh.pos -= this.meshes.length * 1.8 + 1
+            // Handle wrapping
+            if (newX < leftBoundary) {
+              mesh.mesh.position.x = newX + this.totalWidth
+            } else if (newX > rightBoundary) {
+              mesh.mesh.position.x = newX - this.totalWidth
+            } else {
+              mesh.mesh.position.x = newX
             }
           }
         })

@@ -1,5 +1,6 @@
 <script setup>
-import Scene from '@/components/Scene.vue';
+import Scene from '@/components/Scene.vue'
+
 </script>
 
 <template>
@@ -7,11 +8,11 @@ import Scene from '@/components/Scene.vue';
 </template>
 
 <style lang="scss" scoped>
-#hero{
+#hero {
   position: relative;
   height: 100vh;
   width: 100%;
-  h1{
+  h1 {
     text-align: center;
   }
 }
