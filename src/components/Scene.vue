@@ -12,11 +12,11 @@ import * as THREE from 'three'
 import GUI from 'lil-gui'
 
 // Images for textures
-import dylandog from '../assets/images/dylandog.jpg'
-import batman from '../assets/images/batman.jpg'
-import spiderman from '../assets/images/spiderman.jpg'
-import onepiece from '../assets/images/onepiece.jpg'
-import asterix from '../assets/images/asterix.jpg'
+import dylandog from '/images/dylandog.jpg'
+import batman from '/images/batman.jpg'
+import spiderman from '/images/spiderman.jpg'
+import onepiece from '/images/onepiece.jpg'
+import asterix from '/images/asterix.jpg'
 
 // Other
 import gsap from 'gsap'
@@ -152,7 +152,7 @@ export default defineComponent({
 
       addObjects() {
         this.meshes = []
-        this.geometry = new THREE.PlaneGeometry(1.5, 1.5, 50, 50)
+        this.geometry = new THREE.PlaneGeometry(1.5, 1.5, 10, 10)
 
         this.images.forEach((image, index) => {
           let material = this.getMaterial(image)

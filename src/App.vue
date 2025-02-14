@@ -1,7 +1,8 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
+import { useRoute } from 'vue-router'
 
-
+const route = useRoute()
 </script>
 
 <template>
@@ -9,6 +10,7 @@ import { RouterLink, RouterView } from 'vue-router'
     <div class="wrapper">
       <nav>
         <RouterLink to="/">Home</RouterLink>
+        <RouterLink v-if="route.path === '/'" to="/comics/1">Read More</RouterLink>
       </nav>
     </div>
   </header>
@@ -30,10 +32,13 @@ header {
     nav {
       display: flex;
       justify-content: center;
-      gap: 5px;
-      a{
+      gap: 15px;
+      a {
         text-decoration: none;
         color: variables.$white;
+        &:hover {
+          color: variables.$red;
+        }
       }
     }
   }
