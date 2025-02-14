@@ -10,6 +10,8 @@ import { defineComponent, onMounted } from 'vue'
 // Three.js Library
 import * as THREE from 'three'
 import GUI from 'lil-gui'
+import vertex from '../assets/shaders/vertex.glsl'
+import fragment from '../assets/shaders/fragment.glsl'
 
 // Images for textures
 import dylandog from '/images/dylandog.jpg'
@@ -63,20 +65,20 @@ export default defineComponent({
 
           // Set scrolling state to true
           this.isScrolling = true
-          
+
           // Clear the previous timeout
           if (this.scrollTimeout) {
             clearTimeout(this.scrollTimeout)
           }
-          
+
           // Set a timeout to detect when scrolling stops
           this.scrollTimeout = setTimeout(() => {
             this.isScrolling = false
             // Reset hover effect on all meshes when scrolling stops
-            this.meshes.forEach(m => {
+            this.meshes.forEach((m) => {
               gsap.to(m.mesh.material.uniforms.uHover, {
                 value: 0,
-                duration: 0.5
+                duration: 0.4,
               })
             })
           }, 150)
@@ -111,38 +113,11 @@ export default defineComponent({
 
       getMaterial(image) {
         return new THREE.ShaderMaterial({
-          vertexShader: `
-            uniform float uTime;
-            uniform float uProgress;
-            uniform float uHover;
-            varying vec2 vUv;
-            #define PI 3.1415926535897932384626433832795
-
-            void main() {
-              vUv = uv;
-              vec3 newPos = position;
-              
-              // Animated sin wave that reacts to hover
-              newPos.z = -0.1 * cos(newPos.y * 2.0 + uTime * 0.1) * uHover;
-              
-              
-              gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(newPos, 1.0);
-            }
-          `,
-          fragmentShader: `
-            uniform float uProgress;
-            uniform float uTime;
-            uniform sampler2D uTexture;
-            varying vec2 vUv;
-            void main() {
-              vec4 image = texture(uTexture, vUv);
-              gl_FragColor = image;
-            }
-          `,
+          vertexShader: vertex,
+          fragmentShader: fragment,
           side: THREE.DoubleSide,
           transparent: true,
           uniforms: {
-            uProgress: { type: 'f', value: 0 },
             uTime: { type: 'f', value: 0 },
             uHover: { type: 'f', value: 0 },
             uTexture: { type: 't', value: new THREE.TextureLoader().load(image) },
@@ -194,8 +169,8 @@ export default defineComponent({
             // Apply hover effect based on scroll state
             if (this.isScrolling) {
               gsap.to(mesh.mesh.material.uniforms.uHover, {
-                value: 1,
-                duration: 0.3
+                value: 0.1,
+                duration: 0.4,
               })
             }
 
