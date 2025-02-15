@@ -14,15 +14,16 @@ import vertex from '../assets/shaders/vertex.glsl'
 import fragment from '../assets/shaders/fragment.glsl'
 
 // Images for textures
-import dylandog from '/images/dylandog.jpg'
-import batman from '/images/batman.jpg'
-import spiderman from '/images/spiderman.jpg'
-import onepiece from '/images/onepiece.jpg'
-import asterix from '/images/asterix.jpg'
+import dylandog from '/images/dylandog.webp'
+import batman from '/images/batman.webp'
+import spiderman from '/images/spiderman.webp'
+import onepiece from '/images/onepiece.webp'
+import asterix from '/images/asterix.webp'
 
 // Other
 import gsap from 'gsap'
 import VirtualScroll from 'virtual-scroll'
+import imagesLoaded from 'imagesloaded'
 
 export default defineComponent({
   name: 'ThreeSketch',
@@ -92,11 +93,19 @@ export default defineComponent({
         this.time = 0
 
         this.images = [dylandog, batman, spiderman, onepiece, asterix]
+        // Preload images
+        const preloadImages = new Promise((resolve) => {
+          imagesLoaded(this.images, resolve)
+        })
 
-        this.addObjects()
-        this.resize()
-        this.setupSettings()
-        this.render()
+        let allDone = [preloadImages]
+
+        Promise.all(allDone).then(() => {
+          this.setupSettings()
+          this.addObjects()
+          this.resize()
+          this.render()
+        })
       }
 
       setupSettings() {
@@ -169,7 +178,7 @@ export default defineComponent({
             // Apply hover effect based on scroll state
             if (this.isScrolling) {
               gsap.to(mesh.mesh.material.uniforms.uHover, {
-                value: 0.1,
+                value: 0.07,
                 duration: 0.4,
               })
             }

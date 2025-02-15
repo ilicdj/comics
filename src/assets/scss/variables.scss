@@ -5,9 +5,18 @@
   font-style: normal;
 }
 
-$font-heading: 'Comic Sans MS', monospace, sans-serif;
+@font-face {
+  font-family: 'Jokerman';
+  src: url('../fonts/Jokerman.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+$font-heading: 'Comic Sans MS', sans-serif;
+$font-special: 'Jokerman', sans-serif;
 
 // Colors
 $white: #f4f4f3;
 $black: #1d1d1d;
 $red: #DC0000;
+$yellow: #FFE100;

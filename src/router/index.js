@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import SingleComic from '../views/SingleComic.vue'
+import SingleComicView from '../views/SingleComicView.vue'
+import NotFound from '@/components/NotFound.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,8 +14,15 @@ const router = createRouter({
     {
       path: '/comics/:id',
       name: 'single-comic',
-      props: true,
-      component: SingleComic,
+      props: (route) => {
+        return { id: parseInt(route.params.id) }
+      },
+      component: SingleComicView,
+    },
+    {
+      path: '/:catchAll(.*)',
+      name: 'NotFound',
+      component: NotFound
     },
   ],
 })
