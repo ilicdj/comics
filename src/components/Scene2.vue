@@ -15,10 +15,15 @@ import fragment from '../assets/shaders/fragment.glsl'
 
 // Images for textures
 import dylandog from '/images/dylandog.webp'
+import dylandog2 from '/images/dylan2.webp'
 import batman from '/images/batman.webp'
 import spiderman from '/images/spiderman.webp'
+import spiderman2 from '/images/spiderman2.webp'
 import onepiece from '/images/onepiece.webp'
+import onepiece2 from '/images/green.webp'
 import asterix from '/images/asterix.webp'
+import asterix2 from '/images/asterix2.webp'
+import batman2 from '/images/batman2.webp'
 
 // Other
 import gsap from 'gsap'
@@ -42,6 +47,8 @@ export default defineComponent({
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
         this.renderer.setSize(this.width, this.height)
         this.renderer.physicallyCorrectLights = true
+
+        this.meshSpacing = 1.8
 
         // Virtual Scroll
         this.scrollProgress = 0
@@ -91,12 +98,23 @@ export default defineComponent({
 
         container.appendChild(this.renderer.domElement)
 
-        this.camera = new THREE.PerspectiveCamera(70, this.width / this.height, 0.1, 10)
-        this.camera.position.set(0, 0, 1.5)
+        this.camera = new THREE.PerspectiveCamera(50, this.width / this.height, 0.1, 10)
+        this.camera.position.set(0, 0, 2)
 
         this.time = 0
 
-        this.images = [dylandog, batman, spiderman, onepiece, asterix]
+        this.images = [
+          dylandog,
+          batman,
+          spiderman,
+          onepiece,
+          asterix,
+          onepiece2,
+          spiderman2,
+          batman2,
+          dylandog2,
+          asterix2,
+        ]
         // Preload images
         const preloadImages = new Promise((resolve) => {
           imagesLoaded(this.images, resolve)
@@ -146,16 +164,52 @@ export default defineComponent({
         this.images.forEach((image, index) => {
           let material = this.getMaterial(image)
           let mesh = new THREE.Mesh(this.geometry, material)
-          mesh.position.x = (index - 2) * 1.8
+
+          // Calculate a z-position that alternates between three layers
+          // This creates depth for the parallax effect
+          const zLayer = index % 3
+          const zPos = zLayer * 0.3 - 0.3 // Values: -0.3, 0, 0.3
+
+          // Adjust scale based on z-position to maintain perspective
+          const scale = 1 - zPos * 0.1 // Slightly smaller when further back
+          mesh.scale.set(scale, scale, 1)
+
+          // Store the z-position and parallax factor for use in render
+          const parallaxFactor = 1 + zPos * 0.2 // Objects further back move slower
+
+          // Use the consistent spacing value
+          mesh.position.x = index * this.meshSpacing
+          mesh.position.z = zPos
 
           this.scene.add(mesh)
           this.meshes.push({
             mesh: mesh,
             progress: 0,
-            pos: 2 * index,
+            pos: this.meshSpacing * index,
+            parallaxFactor: parallaxFactor, // Store for use in render loop
+            baseZ: zPos, // Store original z position
           })
         })
       }
+      // addObjects() {
+      //   this.meshes = []
+      //   this.geometry = new THREE.PlaneGeometry(1.5, 1.5, 10, 10)
+
+      //   this.images.forEach((image, index) => {
+      //     let material = this.getMaterial(image)
+      //     let mesh = new THREE.Mesh(this.geometry, material)
+
+      //     // Use the consistent spacing value
+      //     mesh.position.x = index * this.meshSpacing
+
+      //     this.scene.add(mesh)
+      //     this.meshes.push({
+      //       mesh: mesh,
+      //       progress: 0,
+      //       pos: this.meshSpacing * index,
+      //     })
+      //   })
+      // }
 
       handleResize() {
         this.width = this.container.offsetWidth
@@ -174,17 +228,18 @@ export default defineComponent({
 
         // Smooth scroll interpolation
         this.scrollProgress += (this.targetScroll - this.scrollProgress) * this.ease
-        // Izračunavanje brzine skrola
         this.scrollSpeed = Math.abs(this.scrollProgress - this.lastScroll) * 100
-        this.lastScroll = this.scrollProgress // Ažuriraj prethodni skrol progress
+        this.lastScroll = this.scrollProgress
 
+        // In the render method, update the meshes forEach loop:
         this.meshes.forEach((mesh) => {
           if (mesh.mesh.material.uniforms.uTime) {
             mesh.mesh.material.uniforms.uTime.value = this.time
-            mesh.mesh.position.x = mesh.pos + this.scrollProgress
-            mesh.mesh.material.uniforms.uScrollSpeed.value = this.scrollSpeed;
 
-            // Apply hover effect based on scroll state
+            // Apply parallax effect to x position
+            mesh.mesh.position.x = (mesh.pos + this.scrollProgress) * mesh.parallaxFactor
+            mesh.mesh.material.uniforms.uScrollSpeed.value = this.scrollSpeed
+
             if (this.isScrolling) {
               gsap.to(mesh.mesh.material.uniforms.uHover, {
                 value: 0.07,
@@ -192,19 +247,50 @@ export default defineComponent({
               })
             }
 
-            // Reset position when mesh goes off-screen to the left
-            if (mesh.mesh.position.x < -5) {
-              mesh.mesh.position.x += this.meshes.length * 1.8 + 1
-              mesh.pos += this.meshes.length * 1.8 + 1
+            // Calculate total width of all meshes
+            const totalWidth = this.meshes.length * this.meshSpacing
+
+            // Adjust the boundaries based on parallax factor
+            if (mesh.mesh.position.x < -5 * mesh.parallaxFactor) {
+              mesh.mesh.position.x += totalWidth * mesh.parallaxFactor
+              mesh.pos += totalWidth
             }
 
-            // Reset position when mesh goes off-screen to the right (for reverse scroll)
-            if (mesh.mesh.position.x > 5) {
-              mesh.mesh.position.x -= this.meshes.length * 1.8 + 1
-              mesh.pos -= this.meshes.length * 1.8 + 1
+            if (mesh.mesh.position.x > 5 * mesh.parallaxFactor) {
+              mesh.mesh.position.x -= totalWidth * mesh.parallaxFactor
+              mesh.pos -= totalWidth
             }
           }
         })
+        // this.meshes.forEach((mesh) => {
+        //   if (mesh.mesh.material.uniforms.uTime) {
+        //     mesh.mesh.material.uniforms.uTime.value = this.time
+        //     mesh.mesh.position.x = mesh.pos + this.scrollProgress
+        //     mesh.mesh.material.uniforms.uScrollSpeed.value = this.scrollSpeed
+
+        //     if (this.isScrolling) {
+        //       gsap.to(mesh.mesh.material.uniforms.uHover, {
+        //         value: 0.07,
+        //         duration: 0.4,
+        //       })
+        //     }
+
+        //     // Calculate total width of all meshes
+        //     const totalWidth = this.meshes.length * this.meshSpacing
+
+        //     // Reset position when mesh goes off-screen to the left
+        //     if (mesh.mesh.position.x < -5) {
+        //       mesh.mesh.position.x += totalWidth
+        //       mesh.pos += totalWidth
+        //     }
+
+        //     // Reset position when mesh goes off-screen to the right
+        //     if (mesh.mesh.position.x > 5) {
+        //       mesh.mesh.position.x -= totalWidth
+        //       mesh.pos -= totalWidth
+        //     }
+        //   }
+        // })
 
         requestAnimationFrame(this.render.bind(this))
         this.renderer.render(this.scene, this.camera)

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watchEffect, onMounted } from 'vue'
 import APIService from '@/services/APIService'
+import { useRouter } from 'vue-router'
 
 const props = defineProps({
   id: Number,
@@ -9,6 +10,7 @@ const props = defineProps({
 const comic = ref(null)
 const totalComics = 5
 
+const router = useRouter()
 
 // Fetch comic data based on the route parameter
 onMounted(() => {
@@ -19,7 +21,16 @@ onMounted(() => {
         comic.value = response.data
       })
       .catch((error) => {
-        console.error(error)
+        if (error.response && error.response.status === 404) {
+          router.push({
+            name: '404Resource',
+            params: { resource: 'comic' },
+          })
+        } else {
+          router.push({
+            name: 'NetworkError',
+          })
+        }
       })
   })
 })
@@ -50,7 +61,7 @@ const hasNext = computed(handleNext)
       <p>Genre: {{ comic.genre.join(', ') }}</p>
     </div>
   </div>
-  <div id="loading" v-else>LOADING ...</div>
+  <!-- <div id="loading" v-else>LOADING ...</div> -->
   <div id="prev-next-wrapper">
     <router-link
       v-if="hasPrev"

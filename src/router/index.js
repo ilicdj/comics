@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import SingleComicView from '../views/SingleComicView.vue'
 import NotFound from '@/components/NotFound.vue'
+import NetworkError from '@/components/NetworkError.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,6 +25,17 @@ const router = createRouter({
       name: 'NotFound',
       component: NotFound
     },
+    {
+      path: '/404/:resource',
+      name: '404Resource',
+      component: NotFound,
+      props: true
+    },
+    {
+      path: '/network-error',
+      name: 'NetworkError',
+      component: NetworkError
+    }
   ],
 })
 
