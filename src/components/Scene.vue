@@ -1,5 +1,4 @@
 <template>
-  <!-- HTML element for CANVAS to be mounted on -->
   <div ref="container" class="webgl-container"></div>
 </template>
 
@@ -9,16 +8,20 @@ import { defineComponent, onMounted } from 'vue'
 
 // Three.js Library
 import * as THREE from 'three'
-import GUI from 'lil-gui'
 import vertex from '../assets/shaders/vertex.glsl'
 import fragment from '../assets/shaders/fragment.glsl'
 
 // Images for textures
 import dylandog from '/images/dylandog.webp'
+import dylandog2 from '/images/dylan2.webp'
 import batman from '/images/batman.webp'
 import spiderman from '/images/spiderman.webp'
+import spiderman2 from '/images/spiderman2.webp'
 import onepiece from '/images/onepiece.webp'
+import onepiece2 from '/images/onepiece2.webp'
 import asterix from '/images/asterix.webp'
+import asterix2 from '/images/asterix2.webp'
+import batman2 from '/images/batman2.webp'
 
 // Other
 import gsap from 'gsap'
@@ -42,44 +45,67 @@ export default defineComponent({
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
         this.renderer.setSize(this.width, this.height)
         this.renderer.physicallyCorrectLights = true
+        this.raycaster = new THREE.Raycaster()
+        this.pointer = new THREE.Vector2()
+        this.camera = new THREE.PerspectiveCamera(60, this.width / this.height, 0.1, 10)
+        this.updateCameraPosition()
 
-        // Virtual Scroll
+        this.scroller = new VirtualScroll()
         this.scrollProgress = 0
         this.targetScroll = 0
-        this.ease = 0.05 // Smoothing factor
-
-        // Scroll Speed
+        this.ease = 0.05
         this.scrollSpeed = 0
         this.lastScroll = 0
-
-        // Add scroll activity tracking
         this.isScrolling = false
         this.scrollTimeout = null
 
-        this.scroller = new VirtualScroll()
-        this.scroller.on((event) => {
-          // Calculate the target scroll position
-          let newTarget = this.targetScroll + event.deltaY * 0.001
+        this.time = 0
+        this.meshSpacing = 1.8
 
-          // Prevent scrolling left at the start position
+        container.appendChild(this.renderer.domElement)
+
+        this.images = [
+          dylandog,
+          batman,
+          spiderman,
+          onepiece,
+          asterix,
+          spiderman2,
+          onepiece2,
+          batman2,
+          dylandog2,
+          asterix2,
+        ]
+
+        const preloadImages = new Promise((resolve) => {
+          imagesLoaded(this.images, resolve)
+        })
+
+        let allDone = [preloadImages]
+
+        Promise.all(allDone).then(() => {
+          this.handleScroll()
+          this.addObjects()
+          this.resize()
+          this.render()
+        })
+      }
+
+      handleScroll() {
+        this.scroller.on((event) => {
+          this.isScrolling = true
+          let newTarget = this.targetScroll + event.deltaY * 0.001
           if (newTarget > 0) {
             newTarget = 0
           }
-
           this.targetScroll = newTarget
-
-          // Set scrolling state to true
-          this.isScrolling = true
-
-          // Clear the previous timeout
           if (this.scrollTimeout) {
             clearTimeout(this.scrollTimeout)
           }
 
-          // Set a timeout to detect when scrolling stops
           this.scrollTimeout = setTimeout(() => {
             this.isScrolling = false
-            // Reset hover effect on all meshes when scrolling stops
+
             this.meshes.forEach((m) => {
               gsap.to(m.mesh.material.uniforms.uHover, {
                 value: 0,
@@ -88,40 +114,6 @@ export default defineComponent({
             })
           }, 150)
         })
-
-        container.appendChild(this.renderer.domElement)
-
-        this.camera = new THREE.PerspectiveCamera(70, this.width / this.height, 0.1, 10)
-        this.camera.position.set(0, 0, 1.5)
-
-        this.time = 0
-
-        this.images = [dylandog, batman, spiderman, onepiece, asterix]
-        // Preload images
-        const preloadImages = new Promise((resolve) => {
-          imagesLoaded(this.images, resolve)
-        })
-
-        let allDone = [preloadImages]
-
-        Promise.all(allDone).then(() => {
-          this.setupSettings()
-          this.addObjects()
-          this.resize()
-          this.render()
-        })
-      }
-
-      setupSettings() {
-        this.settings = {
-          progress: 0,
-          bloomStrength: 0,
-          bloomThreshold: 0,
-          bloomRadius: 0,
-        }
-        this.gui = new GUI()
-        this.gui.add(this.settings, 'progress', 0, 1, 0.01)
-        this.gui.hide()
       }
 
       getMaterial(image) {
@@ -146,15 +138,47 @@ export default defineComponent({
         this.images.forEach((image, index) => {
           let material = this.getMaterial(image)
           let mesh = new THREE.Mesh(this.geometry, material)
-          mesh.position.x = (index - 2) * 1.8
+
+          mesh.position.x = index * this.meshSpacing
 
           this.scene.add(mesh)
           this.meshes.push({
             mesh: mesh,
             progress: 0,
-            pos: 2 * index,
+            pos: this.meshSpacing * index,
           })
         })
+      }
+
+      updateCameraPosition() {
+        const width = window.innerWidth
+        
+        if (width <= 428) {
+          this.camera.position.set(0, 0, 4.5)
+          this.meshSpacing = 2.2 
+        }
+        else if (width <= 820) {
+          this.camera.position.set(0, 0, 3)
+          this.meshSpacing = 2
+        }
+        else if (width <= 1024) {
+          this.camera.position.set(0, 0, 2.5)
+          this.meshSpacing = 1.9
+        }
+        else if (width <= 1440) {
+          this.camera.position.set(0, 0, 2)
+          this.meshSpacing = 1.8
+        }
+        else {
+          this.camera.position.set(0, 0, 1.5)
+          this.meshSpacing = 1.8
+        }
+
+        if (this.meshes) {
+          this.meshes.forEach((mesh, index) => {
+            mesh.pos = this.meshSpacing * index
+          })
+        }
       }
 
       handleResize() {
@@ -162,6 +186,7 @@ export default defineComponent({
         this.height = this.container.offsetHeight
         this.renderer.setSize(this.width, this.height)
         this.camera.aspect = this.width / this.height
+        this.updateCameraPosition()
         this.camera.updateProjectionMatrix()
       }
 
@@ -174,17 +199,15 @@ export default defineComponent({
 
         // Smooth scroll interpolation
         this.scrollProgress += (this.targetScroll - this.scrollProgress) * this.ease
-        // Izračunavanje brzine skrola
         this.scrollSpeed = Math.abs(this.scrollProgress - this.lastScroll) * 100
-        this.lastScroll = this.scrollProgress // Ažuriraj prethodni skrol progress
+        this.lastScroll = this.scrollProgress
 
         this.meshes.forEach((mesh) => {
           if (mesh.mesh.material.uniforms.uTime) {
             mesh.mesh.material.uniforms.uTime.value = this.time
             mesh.mesh.position.x = mesh.pos + this.scrollProgress
-            mesh.mesh.material.uniforms.uScrollSpeed.value = this.scrollSpeed;
+            mesh.mesh.material.uniforms.uScrollSpeed.value = this.scrollSpeed
 
-            // Apply hover effect based on scroll state
             if (this.isScrolling) {
               gsap.to(mesh.mesh.material.uniforms.uHover, {
                 value: 0.07,
@@ -192,16 +215,19 @@ export default defineComponent({
               })
             }
 
+            // Calculate total width of all meshes
+            const totalWidth = this.meshes.length * this.meshSpacing
+
             // Reset position when mesh goes off-screen to the left
             if (mesh.mesh.position.x < -5) {
-              mesh.mesh.position.x += this.meshes.length * 1.8 + 1
-              mesh.pos += this.meshes.length * 1.8 + 1
+              mesh.mesh.position.x += totalWidth
+              mesh.pos += totalWidth
             }
 
-            // Reset position when mesh goes off-screen to the right (for reverse scroll)
+            // Reset position when mesh goes off-screen to the right
             if (mesh.mesh.position.x > 5) {
-              mesh.mesh.position.x -= this.meshes.length * 1.8 + 1
-              mesh.pos -= this.meshes.length * 1.8 + 1
+              mesh.mesh.position.x -= totalWidth
+              mesh.pos -= totalWidth
             }
           }
         })

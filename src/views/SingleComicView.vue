@@ -61,7 +61,7 @@ const hasNext = computed(handleNext)
       <p>Genre: {{ comic.genre.join(', ') }}</p>
     </div>
   </div>
-  <!-- <div id="loading" v-else>LOADING ...</div> -->
+  <div id="loading" v-else>LOADING ...</div>
   <div id="prev-next-wrapper">
     <router-link
       v-if="hasPrev"
@@ -100,7 +100,6 @@ const hasNext = computed(handleNext)
   color: variables.$white;
   display: flex;
   #poster-wrapper {
-    // background-color: lightblue;
     width: 50%;
     height: 100%;
     img {
@@ -110,7 +109,6 @@ const hasNext = computed(handleNext)
     }
   }
   #comic-info-wrapper {
-    // background-color: lightgreen;
     width: 50%;
     padding: 1rem;
     padding-left: 50px;
@@ -140,6 +138,68 @@ const hasNext = computed(handleNext)
     cursor: pointer;
     &:hover {
       color: variables.$red;
+    }
+  }
+}
+@media (max-width: 1200px) {
+  #single-comic {
+    height: auto;
+    flex-direction: column;
+    #poster-wrapper,
+    #comic-info-wrapper {
+      width: 100%;
+      height: auto;
+    }
+    #comic-info-wrapper {
+      padding-left: 20px;
+      padding-top: 20px;
+    }
+  }
+  #prev-next-wrapper {
+    right: 5%;
+    bottom: 1%;
+    gap: 50px;
+    a {
+      font-size: 40px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  #single-comic {
+    #comic-info-wrapper {
+      padding-left: 10px;
+      padding-top: 10px;
+      h1 {
+        font-size: clamp(1.5rem, 4vw, 2.5rem);
+      }
+      p {
+        font-size: clamp(1.5rem, 4vw, 2.5rem);
+        margin-top: 1.5rem;
+      }
+    }
+  }
+  #prev-next-wrapper {
+    gap: 30px;
+    a {
+      font-size: 30px;
+    }
+  }
+}
+
+@media (max-width: 650px) {
+  #single-comic {
+    height: 100vh;
+    #comic-info-wrapper {
+      padding-left: 5px;
+      padding-top: 5px;
+      h1 {
+        font-size: clamp(1rem, 3vw, 2rem);
+      }
+      p {
+        font-size: clamp(1rem, 3vw, 2rem);
+        margin-top: 1rem;
+      }
     }
   }
 }

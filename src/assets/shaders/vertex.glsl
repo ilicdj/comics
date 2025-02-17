@@ -10,7 +10,7 @@ void main() {
     vec3 newPos = position;
 
     // Dramatic distortion - exaggerated waves
-    float wave = sin(newPos.y * 4.0 + uTime * 2.0) * 0.5 * uHover;
+    float wave = sin(newPos.y * 4.0 + uTime * 2.0) * 0.6 * uHover;
     // float wave = sin(newPos.y * 4.0 + uTime * (1.0 + uScrollSpeed * 0.01)) * 0.5 * uHover;
 
     float ripple = sin(distance(newPos.xy, vec2(0.0)) * 6.0 - uTime * 3.0) * 5.1 * uHover;

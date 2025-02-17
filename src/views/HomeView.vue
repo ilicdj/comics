@@ -1,10 +1,10 @@
 <script setup>
-import ParallaxScene from '@/components/ParallaxScene.vue'
+import Scene from '@/components/Scene.vue'
 
 </script>
 
 <template>
-  <ParallaxScene />
+  <Scene />
 </template>
 
 <style lang="scss" scoped>
