@@ -12,7 +12,7 @@ const totalComics = 5
 
 const router = useRouter()
 
-// Fetch comic data based on the route parameter
+// Fetch comic data based on the passed prop
 onMounted(() => {
   watchEffect(() => {
     comic.value = null
